@@ -51,6 +51,12 @@ jobs:
             snow sql -x --enable-templating NONE -f "$RUNNER_TEMP/sv.sql"
           done
 
+      # DCM cannot define or grant on an agent, so the pipeline creates it the first
+      # time (and pins its default), then lets the audience role use it.
+      - name: Ensure the agent exists
+        run: |
+          ops sql "$TARGET" ops/ensure_agent.sql -D audience_role="$(ops audience-role "$TARGET")"
+
       - name: Add agent version
         run: |
           subject=$(git log -1 --format=%s)

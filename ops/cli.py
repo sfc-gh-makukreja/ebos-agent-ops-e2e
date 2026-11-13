@@ -149,7 +149,8 @@ def access_sql(cfg: dict, spec: dict, sv_docs: list[dict]) -> str:
     ]
     for s in ("CORE", "CONTEXT", "TOOLS"):
         lines.append(f"GRANT USAGE ON SCHEMA AGENTS_{{{{ env }}}}.{s} TO ROLE {r};")
-    lines.append(f"GRANT USAGE ON AGENT AGENTS_{{{{ env }}}}.CORE.{agent} TO ROLE {r};")
+    # The agent itself is granted by ops/ensure_agent.sql: DCM cannot grant on an agent
+    # that does not exist yet, and DCM is what creates the schema the agent lives in.
 
     seen_schema, seen_db = set(), set()
 
@@ -328,6 +329,8 @@ def main(argv=None) -> int:
 
     sub.add_parser("deps", help="list what the adopted agent's tools touch")
     sub.add_parser("semantic-views", help="paths of the semantic view files in agentops.yml")
+    s = sub.add_parser("audience-role", help="the audience role name for an environment")
+    s.add_argument("env", type=str.upper)
     sub.add_parser("generate", help="generate the DCM manifest, agent home and audience grants")
 
     s = sub.add_parser("sql", help="run a SQL file with snow sql and the agent variables for one environment")
@@ -353,6 +356,8 @@ def main(argv=None) -> int:
     elif args.cmd == "deps":
         spec = yaml.safe_load((ROOT / cfg["agent"]["spec"]).read_text())
         print(yaml.safe_dump(spec_dependencies(spec), sort_keys=False))
+    elif args.cmd == "audience-role":
+        print(f"{cfg['agent']['name'].upper()}_{args.env}_USER")
     elif args.cmd == "semantic-views":
         print("\n".join(cfg["agent"].get("semantic_views", [])))
     elif args.cmd == "generate":
