@@ -76,13 +76,14 @@ jobs:
           ops eval-config > "$RUNNER_TEMP/eval_config.yaml"
 
       - name: Evaluate
+        id: evaluate
         if: inputs.environment == 'test'
         run: |
           ops sql "$TARGET" ops/evaluate.sql -D run="${TARGET^^}-${LABEL::7}-${GITHUB_RUN_ATTEMPT}" \
             -D config="$RUNNER_TEMP/eval_config.yaml"
 
       - name: Evaluation report
-        if: inputs.environment == 'test' && !cancelled()
+        if: inputs.environment == 'test' && (success() || steps.evaluate.conclusion == 'failure')
         run: |
           ops sql "$TARGET" ops/eval_report.sql -D run="${TARGET^^}-${LABEL::7}-${GITHUB_RUN_ATTEMPT}" \
             --format json | jq -r '.[-1].REPORT' > "$RUNNER_TEMP/report.md"

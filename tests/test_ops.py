@@ -93,3 +93,12 @@ def test_sql_args_pin_display_name_for_prod_only():
     test = cli.snow_sql_args(CFG, "TEST", "f.sql", ["-D", "x=1"])
     assert "display=My Agent (TEST)" in test and test[-2:] == ["-D", "x=1"]
     assert "display=My Agent" in cli.snow_sql_args(CFG, "PROD", "f.sql", [])
+
+
+def test_deployer_grants_cover_non_data_dependencies_for_every_environment():
+    spec = {"tool_resources": {
+        "A": {"semantic_view": "SALES_DEV.CORE.SV", "execution_environment": {"warehouse": "TOOL_WH"}},
+        "S": {"search_service": "SALES_DEV.CORE.DOCS"}}}
+    sql = cli.deployer_grants(CFG, spec)
+    assert "GRANT USAGE ON WAREHOUSE TOOL_WH TO ROLE AGENTOPS_DEPLOYER_PROD WITH GRANT OPTION" in sql
+    assert "GRANT USAGE ON CORTEX SEARCH SERVICE SALES_TEST.CORE.DOCS TO ROLE AGENTOPS_DEPLOYER_TEST WITH GRANT OPTION" in sql
