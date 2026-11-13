@@ -1,52 +1,49 @@
 models:
-  orchestration: "auto"
+  orchestration: auto
 orchestration:
   budget:
     seconds: 60
     tokens: 16000
 instructions:
-  response: "You are a supply chain analyst for EBOS Healthcare, an Australasian healthcare\
-    \ and pharmaceutical wholesaler. Present data with charts and tables where possible.\
-    \ Use data_to_chart for quantitative analysis. Use clear headers and bullets.\
-    \ Give actionable insights, not just raw data."
-  orchestration: "- For what questions, give metrics with trends and comparisons.\
-    \ \n- For why questions, test several factors (warehouse, supplier lead-time band,\
-    \ cold chain, category) and say which have no effect. \n- For how questions, give\
-    \ specific recommendations with expected impact. \n- Cross-reference structured\
-    \ data with supplier notices from Search."
+  response: You are a supply chain analyst for EBOS Healthcare, an Australasian healthcare and pharmaceutical
+    wholesaler. Present data with charts and tables where possible. Use data_to_chart for quantitative
+    analysis. Use clear headers and bullets. Give actionable insights, not just raw data. Always state
+    the time period a figure covers.
+  orchestration: "- For what questions, give metrics with trends and comparisons. \n- For why questions,\
+    \ test several factors (warehouse, supplier lead-time band, cold chain, category) and say which have\
+    \ no effect. \n- For how questions, give specific recommendations with expected impact. \n- Cross-reference\
+    \ structured data with supplier notices from Search."
   sample_questions:
-    - question: "What is our stock-out rate for essential medicines over the last\
-        \ 18 months, and how much sales did we lose?"
-    - question: "How has the stock-out rate trended by month?"
-    - question: "Is any distribution centre driving the stock-outs?"
-    - question: "What is really driving stock-outs, and what do supplier notices say\
-        \ about the causes?"
-    - question: "What should procurement do in the next quarter to cut stock-outs?"
+  - question: What is our stock-out rate for essential medicines over the last 18 months, and how much
+      sales did we lose?
+  - question: How has the stock-out rate trended by month?
+  - question: Is any distribution centre driving the stock-outs?
+  - question: What is really driving stock-outs, and what do supplier notices say about the causes?
+  - question: What should procurement do in the next quarter to cut stock-outs?
 tools:
-  - tool_spec:
-      type: "cortex_analyst_text_to_sql"
-      name: "Analyst"
-      description: "Answers questions about stock-out rates, lost sales, purchase\
-        \ order lateness and fill rates by supplier, product, category, cold chain\
-        \ and distribution centre."
-  - tool_spec:
-      type: "cortex_search"
-      name: "Search"
-      description: "Searches supplier notices, shortage bulletins and internal memos\
-        \ for qualitative causes of supply problems."
-  - tool_spec:
-      type: "data_to_chart"
-      name: "data_to_chart"
-      description: "Generates visualizations from data."
+- tool_spec:
+    type: cortex_analyst_text_to_sql
+    name: Analyst
+    description: Answers questions about stock-out rates, lost sales, purchase order lateness and fill
+      rates by supplier, product, category, cold chain and distribution centre.
+- tool_spec:
+    type: cortex_search
+    name: Search
+    description: Searches supplier notices, shortage bulletins and internal memos for qualitative causes
+      of supply problems.
+- tool_spec:
+    type: data_to_chart
+    name: data_to_chart
+    description: Generates visualizations from data.
 skills: []
 tool_resources:
   Analyst:
     execution_environment:
-      type: "warehouse"
-      warehouse: "COWORK_EBOS_DEMO_WH"
-    semantic_view: "AGENTS_DEV.CONTEXT.EBOS_SUPPLIER_STOCKOUTS_SV"
+      type: warehouse
+      warehouse: COWORK_EBOS_DEMO_WH
+    semantic_view: AGENTS_DEV.CONTEXT.EBOS_SUPPLIER_STOCKOUTS_SV
   Search:
-    id_column: "DOC_ID"
+    id_column: DOC_ID
     max_results: 5
-    search_service: "EBOS_DEV.EBOS_SUPPLIER_STOCKOUTS.SUPPLIER_NOTICES_SEARCH"
-    title_column: "TITLE"
+    search_service: EBOS_DEV.EBOS_SUPPLIER_STOCKOUTS.SUPPLIER_NOTICES_SEARCH
+    title_column: TITLE
