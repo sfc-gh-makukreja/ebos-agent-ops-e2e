@@ -1,13 +1,14 @@
 # Deploys one environment: DCM (agent home, stages, audience roles), the semantic
 # views, then a new agent version. Test (UAT) also scores the version and puts the
 # report on the run page for the business, then promotes. Prod promotes and tags the
-# release. Permissions come from the caller: only prod can write.
+# release. Dev (run by hand) does the deploy and the promote only. Permissions come
+# from the caller: only prod can write.
 name: Deploy environment
 
 on:
   workflow_call:
     inputs:
-      environment: { required: true, type: string }   # test | prod
+      environment: { required: true, type: string }   # dev | test | prod
 
 defaults:
   run:

@@ -1,0 +1,18 @@
+# Deploy the current branch to DEV by hand. Run it once to create the DEV
+# environment (the pull request checks validate against it), and again whenever you
+# want to try a branch in DEV before opening a pull request. It uses the same steps
+# as test and prod, minus the evaluation and the release.
+name: Deploy to dev
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dev:
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: dev

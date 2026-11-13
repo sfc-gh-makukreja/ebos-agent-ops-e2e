@@ -61,14 +61,21 @@ show the command first. Never print tokens or PATs.
    Teams exist only for organisation repos. For a personal repo, use a `User` reviewer.
    Ask the user who approves which gate.
 
-5. **Create the agent in each environment (once).** The first DCM deploy creates
-   `AGENTS_<ENV>`; the agent must exist before the audience grants succeed. Order:
-   - push to `main` and let `Main` run to the first failure, or run
-     `snow dcm deploy` locally per environment;
-   - then `uv run ops sql <ENV> bootstrap/agent.sql` for DEV, TEST, PROD;
-   - re-run the failed `Main` job.
+5. **Grant the deployers what the agent's tools need.** Data tables are covered by
+   `aux/data/grant_deployers.sql`. The warehouse, search services and functions the
+   tools use are generated:
+   ```bash
+   uv run ops deployer-grants > deployer_grants.sql
+   uv run snow sql -c <connection> -f deployer_grants.sql
+   ```
+   Without this, DCM fails to grant the audience role what the deployer does not hold.
+   The first `Main` run creates `AGENTS_<ENV>` and the agent itself; nothing is created by hand.
 
-6. **Prove it.** Merge a one-line change to the agent instructions through a PR.
+6. **Create DEV.** The pull request check validates semantic views against
+   `AGENTS_DEV`, and nothing else creates it. Run the **Deploy to dev** workflow once:
+   `gh workflow run dev.yml`. Re-run it whenever you want to try a branch in DEV.
+
+7. **Prove it.** Merge a one-line change to the agent instructions through a PR.
    Expect: PR plan comment, test deploy + evaluation report on the run page, prod
    waiting for approval. Approve prod. Then run the **Rollback** workflow with the
    previous release or commit and confirm the `PROD` alias moved back.
