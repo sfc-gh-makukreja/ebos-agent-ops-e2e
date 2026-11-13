@@ -112,3 +112,12 @@ def test_pipeline_created_objects_are_granted_after_dcm_not_in_it():
     assert "GRANT USAGE ON AGENT AGENTS_TEST.CORE.MY_AGENT TO ROLE MY_AGENT_TEST_USER" in post
     assert "GRANT SELECT ON SEMANTIC VIEW AGENTS_TEST.CONTEXT.ORDERS_SV TO ROLE MY_AGENT_TEST_USER" in post
     assert "no audience" in cli.post_grants(CFG, spec, "DEV")
+
+
+def test_eval_dataset_is_published_as_a_dataset_object_the_config_names():
+    sql = cli.eval_dataset_sql(CFG, "TEST", [{"question": "q'1", "good_answer": "a"}])
+    assert "q''1" in sql
+    assert "SYSTEM$CREATE_EVALUATION_DATASET('Cortex Agent', 'AGENTS_TEST.CORE.MY_AGENT_TEST_QUESTIONS'" in sql
+    assert "AGENTS_TEST.CORE.MY_AGENT_TESTS" in sql
+    cfg_yaml = yaml.safe_load(cli.eval_config_yaml(CFG))
+    assert cfg_yaml["evaluation"]["source_metadata"]["dataset_name"] == "MY_AGENT_TESTS"

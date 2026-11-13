@@ -325,7 +325,14 @@ def eval_dataset_sql(cfg: dict, env: str, questions: list[dict]) -> str:
     return (f"CREATE OR REPLACE TABLE {table} (INPUT_QUERY VARCHAR, GROUND_TRUTH VARIANT);\n"
             f"INSERT INTO {table} (INPUT_QUERY, GROUND_TRUTH)\n"
             "SELECT question, TO_VARIANT(OBJECT_CONSTRUCT('ground_truth_output', good_answer))\n"
-            "FROM VALUES\n" + ",\n".join(rows) + "\nAS t(question, good_answer);\n")
+            "FROM VALUES\n" + ",\n".join(rows) + "\nAS t(question, good_answer);\n\n"
+            # An evaluation cannot read a table directly; it needs a dataset object, which is
+            # an immutable snapshot, so drop first to keep this re-runnable. The mapping keys
+            # are the ones this function takes (they differ from the evaluation config's).
+            f"DROP DATASET IF EXISTS AGENTS_{env}.CORE.{agent}_TESTS;\n"
+            f"CALL SYSTEM$CREATE_EVALUATION_DATASET('Cortex Agent', '{table}',\n"
+            f"    'AGENTS_{env}.CORE.{agent}_TESTS',\n"
+            "    OBJECT_CONSTRUCT('query_text', 'INPUT_QUERY', 'expected_tools', 'GROUND_TRUTH'));\n")
 
 
 def eval_config_yaml(cfg: dict) -> str:
@@ -334,7 +341,7 @@ def eval_config_yaml(cfg: dict) -> str:
         "evaluation": {
             "agent_params": {"agent_name": agent, "agent_type": "CORTEX AGENT",
                              "agent_version": "LAST"},
-            "source_metadata": {"type": "dataset", "dataset_name": f"{agent}_TEST_QUESTIONS"},
+            "source_metadata": {"type": "dataset", "dataset_name": f"{agent}_TESTS"},
         },
         "metrics": [{"name": "answer_correctness", "version": "v3"},
                     {"name": "logical_consistency", "version": "v3"}],
