@@ -1,0 +1,18 @@
+agent:
+  name: EBOS_SUPPLY_AGENT
+  display_name: EBOS Supply Assistant
+  comment: Supply chain assistant for EBOS Healthcare. Analyses stock-outs, supplier performance and supplier notices.
+  spec: agent/agent.yaml
+  semantic_views:
+    - agent/ebos_supplier_stockouts_sv.sv.yaml
+data_databases: [EBOS]
+audiences: {TEST: MKUKREJA, PROD: MKUKREJA}
+extra_grants: []
+snowflake:
+  account: SFSEAPAC-MAKUKREJA_AWS_US_WEST_2
+  ci_warehouse: AGENTOPS_CI_WH
+  dcm_database: PLATFORM_CONTROL
+  dcm_schema: PROJECTS
+github:
+  repo: sfc-gh-makukreja/ebos-agent-ops-e2e
+  approvers: {test: sfc-gh-makukreja, prod: sfc-gh-makukreja}

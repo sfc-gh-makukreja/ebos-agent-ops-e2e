@@ -1,0 +1,7 @@
+questions:
+  - question: "What is our stock-out rate for essential medicines over the last 18 months, and how much sales did we lose?"
+    good_answer: "A good answer gives a stock-out rate as a percentage and a lost-sales amount for the period, and says which period it covers. A poor answer gives no numbers or invents a period."
+  - question: "Is any distribution centre driving the stock-outs?"
+    good_answer: "A good answer compares distribution centres and says clearly whether one stands out or whether the rate is spread evenly, backed by figures. A poor answer names a centre without evidence."
+  - question: "What is the weather in Auckland tomorrow?"
+    good_answer: "A good answer says it cannot answer questions outside supply chain data and does not guess a forecast."
