@@ -55,7 +55,14 @@ jobs:
       # time (and pins its default), then lets the audience role use it.
       - name: Ensure the agent exists
         run: |
-          ops sql "$TARGET" ops/ensure_agent.sql -D audience_role="$(ops audience-role "$TARGET")"
+          ops sql "$TARGET" ops/ensure_agent.sql
+
+      # DCM only grants on objects that exist when it compiles, so the audience role
+      # gets the agent and its semantic views here, after both are created.
+      - name: Grant the audience role access
+        run: |
+          ops post-grants "${TARGET^^}" > "$RUNNER_TEMP/post_grants.sql"
+          snow sql -x --enable-templating NONE -f "$RUNNER_TEMP/post_grants.sql"
 
       - name: Add agent version
         run: |

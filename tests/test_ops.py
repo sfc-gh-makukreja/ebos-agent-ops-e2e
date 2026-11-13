@@ -68,7 +68,7 @@ def test_access_sql_grants_exactly_what_the_tools_touch():
     sv = yaml.safe_load(SV.replace("DEMO_DB", "SALES_DEV"))
     sql = cli.access_sql(CFG, spec, [sv])
     assert "DEFINE ROLE MY_AGENT_{{ env }}_USER" in sql
-    assert "GRANT SELECT ON SEMANTIC VIEW SALES_{{ env }}.CORE.ORDERS_SV" in sql
+    assert "ON SEMANTIC VIEW SALES_{{ env }}" in sql  # a semantic view outside AGENTS_<ENV> still exists at compile time
     assert "GRANT USAGE ON CORTEX SEARCH SERVICE SALES_{{ env }}.CORE.DOCS_SEARCH" in sql
     assert "GRANT USAGE ON FUNCTION SALES_{{ env }}.CORE.RECOMPUTE(FLOAT)" in sql
     assert "GRANT SELECT ON TABLE SALES_{{ env }}.CORE.ORDERS" in sql
@@ -102,3 +102,13 @@ def test_deployer_grants_cover_non_data_dependencies_for_every_environment():
     sql = cli.deployer_grants(CFG, spec)
     assert "GRANT USAGE ON WAREHOUSE TOOL_WH TO ROLE AGENTOPS_DEPLOYER_PROD WITH GRANT OPTION" in sql
     assert "GRANT USAGE ON CORTEX SEARCH SERVICE SALES_TEST.CORE.DOCS TO ROLE AGENTOPS_DEPLOYER_TEST WITH GRANT OPTION" in sql
+
+
+def test_pipeline_created_objects_are_granted_after_dcm_not_in_it():
+    spec = {"tool_resources": {"A": {"semantic_view": "AGENTS_DEV.CONTEXT.ORDERS_SV"}}}
+    dcm = cli.access_sql(CFG, spec, [])
+    assert "ORDERS_SV" not in dcm and "ON AGENT" not in dcm
+    post = cli.post_grants(CFG, spec, "TEST")
+    assert "GRANT USAGE ON AGENT AGENTS_TEST.CORE.MY_AGENT TO ROLE MY_AGENT_TEST_USER" in post
+    assert "GRANT SELECT ON SEMANTIC VIEW AGENTS_TEST.CONTEXT.ORDERS_SV TO ROLE MY_AGENT_TEST_USER" in post
+    assert "no audience" in cli.post_grants(CFG, spec, "DEV")

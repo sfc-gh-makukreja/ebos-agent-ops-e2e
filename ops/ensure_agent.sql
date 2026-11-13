@@ -1,7 +1,6 @@
--- Make sure the agent exists, then let the audience role use it. Runs in every
--- deploy, as the deployer role, after DCM has created AGENTS_<ENV> and the
--- audience role. Safe to re-run: it only creates and pins the agent the first time.
---   uv run ops sql TEST ops/ensure_agent.sql -D audience_role=MY_AGENT_TEST_USER
+-- Make sure the agent exists. Runs in every deploy, as the deployer role, after DCM
+-- has created AGENTS_<ENV>. Safe to re-run: it only creates and pins the agent the first time.
+--   uv run ops sql TEST ops/ensure_agent.sql
 --
 -- Why not in DCM: DCM has no DEFINE AGENT, and a GRANT on an agent that does not
 -- exist yet fails DCM's compile, which would stop AGENTS_<ENV> ever being created.
@@ -33,5 +32,3 @@ BEGIN
   RETURN 'agent ready';
 END;
 $$;
-
-GRANT USAGE ON AGENT AGENTS_<% env %>.CORE.<% agent %> TO ROLE <% audience_role %>;

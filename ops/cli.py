@@ -170,6 +170,8 @@ def access_sql(cfg: dict, spec: dict, sv_docs: list[dict]) -> str:
         if wh_name.upper() != wh.upper():
             lines.append(f"GRANT USAGE ON WAREHOUSE {wh_name} TO ROLE {r};")
     for fqn in deps["semantic_views"]:
+        if parse_fqn(fqn)[0].upper() == "AGENTS_DEV":
+            continue  # created by the pipeline after DCM; granted by `ops post-grants`
         grant_container(fqn)
         lines.append(f"GRANT SELECT ON SEMANTIC VIEW {tmpl(fqn, cfg)} TO ROLE {r};")
     for fqn in deps["search_services"]:
@@ -255,6 +257,20 @@ def generate(cfg: dict) -> list[str]:
     (defs / "access" / "access.sql").write_text(access_sql(cfg, spec, sv_docs))
     return ["dcm/manifest.yml", "dcm/sources/definitions/platform/agent_home.sql",
             "dcm/sources/definitions/access/access.sql"]
+
+
+def post_grants(cfg: dict, spec: dict, env: str) -> str:
+    """Grants on objects the pipeline creates after DCM (the agent and its semantic views).
+    DCM validates at compile time that everything it grants on already exists, so these
+    cannot live in access.sql."""
+    if env not in (cfg.get("audiences") or {}):
+        return "SELECT 'no audience in this environment' AS note;\n"
+    role = f"{cfg['agent']['name'].upper()}_{env}_USER"
+    out = [f"GRANT USAGE ON AGENT AGENTS_{env}.CORE.{cfg['agent']['name'].upper()} TO ROLE {role};"]
+    for fqn in spec_dependencies(spec)["semantic_views"]:
+        if parse_fqn(fqn)[0].upper() == "AGENTS_DEV":
+            out.append(f"GRANT SELECT ON SEMANTIC VIEW {render_text(fqn, env, cfg)} TO ROLE {role};")
+    return "\n".join(out) + "\n"
 
 
 def deployer_grants(cfg: dict, spec: dict) -> str:
@@ -348,9 +364,9 @@ def main(argv=None) -> int:
 
     sub.add_parser("deps", help="list what the adopted agent's tools touch")
     sub.add_parser("semantic-views", help="paths of the semantic view files in agentops.yml")
-    sub.add_parser("deployer-grants", help="SQL granting the deployer roles what the agent's tools need")
-    s = sub.add_parser("audience-role", help="the audience role name for an environment")
+    s = sub.add_parser("post-grants", help="SQL granting the audience role the agent and its semantic views")
     s.add_argument("env", type=str.upper)
+    sub.add_parser("deployer-grants", help="SQL granting the deployer roles what the agent's tools need")
     sub.add_parser("generate", help="generate the DCM manifest, agent home and audience grants")
 
     s = sub.add_parser("sql", help="run a SQL file with snow sql and the agent variables for one environment")
@@ -376,11 +392,12 @@ def main(argv=None) -> int:
     elif args.cmd == "deps":
         spec = yaml.safe_load((ROOT / cfg["agent"]["spec"]).read_text())
         print(yaml.safe_dump(spec_dependencies(spec), sort_keys=False))
+    elif args.cmd == "post-grants":
+        spec = yaml.safe_load((ROOT / cfg["agent"]["spec"]).read_text())
+        sys.stdout.write(post_grants(cfg, spec, args.env))
     elif args.cmd == "deployer-grants":
         spec = yaml.safe_load((ROOT / cfg["agent"]["spec"]).read_text())
         sys.stdout.write(deployer_grants(cfg, spec))
-    elif args.cmd == "audience-role":
-        print(f"{cfg['agent']['name'].upper()}_{args.env}_USER")
     elif args.cmd == "semantic-views":
         print("\n".join(cfg["agent"].get("semantic_views", [])))
     elif args.cmd == "generate":
